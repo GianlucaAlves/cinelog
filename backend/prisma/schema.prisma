@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  email String @unique
+  hashedPassword String 
+  createdAt DateTime @default(now())
+  reviews Review[]
+  watchlists Watchlist[]
+}
+
+model Movie {
+  id Int @id @default(autoincrement())
+  tmdbId Int @unique
+  title String 
+  type String 
+  releaseDate DateTime 
+  posterPath String 
+  createdAt DateTime @default(now())
+  reviews Review[]
+  watchlists Watchlist[]
+}
+
+model Review {
+  id Int @id @default(autoincrement())
+  userId Int 
+  movieId Int 
+  rating Float
+  text String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  movie     Movie    @relation(fields: [movieId], references: [id]) 
+}
+
+model Watchlist {
+  id Int @id @default(autoincrement())
+  userId Int 
+  movieId Int 
+  addedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  movie     Movie    @relation(fields: [movieId], references: [id])
+  }
