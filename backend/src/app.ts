@@ -4,8 +4,8 @@ import router from './routes/auth';
 const app = express();
 const port = 3000;
 
-app.use(router);
 app.use(express.json());
+app.use(router);
 
 app.get('/', (req, res) => {
   res.json({ok: true});
