@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
 import { generateAccessToken, setRefreshTokenCookie } from '../lib/tokens';
 import {requireAuth} from '../middlewares/requireAuth';
+import jwt from "jsonwebtoken";
 
 const router = Router()
 
@@ -52,10 +53,10 @@ router.post('/login', async (req: Request, res: Response) => {
 
 router.post('/register', async (req: Request, res: Response) => {
   try{
-    const {email, password} = req.body;
+    const {email, username, password} = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({error: 'Email and password are required'});
+    if (!email || !username || !password) {
+        return res.status(400).json({error: 'Email, username and password are required'});
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -69,6 +70,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const newUser = await prisma.user.create({
       data: {
         email,
+        username,
         hashedPassword,
       },
     });
@@ -89,6 +91,51 @@ router.post('/logout', (req: Request, res: Response) => {
     sameSite: 'strict',
   });
   res.status(200).json({ message: 'Logged out successfully' });
+});
+
+
+router.get('/me', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, username: true },
+    });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/refresh', async (req: Request, res: Response) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ error: 'Refresh token is required' });
+    }
+    const userId = await new Promise<number>((resolve, reject) => {
+      jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!, undefined, (err, decoded) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve((decoded as jwt.JwtPayload).userId as number);
+        }
+        }
+    );
+    }
+);
+
+    const accessToken = generateAccessToken(userId);
+    setRefreshTokenCookie(res, userId);
+    res.status(200).json({ accessToken });
+  } catch (error) {
+    console.error(error);
+    res.status(401).json({ error: 'Invalid or expired refresh token' });
+  }
 });
 
 export default router;
