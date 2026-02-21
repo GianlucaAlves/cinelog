@@ -2,6 +2,7 @@ import {Router, Request, Response} from "express";
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
 import { generateAccessToken, setRefreshTokenCookie } from '../lib/tokens';
+import {requireAuth} from '../middlewares/requireAuth';
 
 const router = Router()
 
@@ -79,6 +80,15 @@ router.post('/register', async (req: Request, res: Response) => {
     console.error(error);
     return res.status(500).json({error: 'Internal server error'});
   }
+});
+
+router.post('/logout', (req: Request, res: Response) => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,    
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: 'strict',
+  });
+  res.status(200).json({ message: 'Logged out successfully' });
 });
 
 export default router;
