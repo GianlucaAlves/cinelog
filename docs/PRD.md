@@ -1,7 +1,6 @@
-text
 # CineLog — Product Requirements Document
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Author:** Gianluca  
 **Date:** February 2026  
 **Status:** Draft
@@ -10,7 +9,9 @@ text
 
 ## 1. Project Overview
 
-CineLog is a full-stack web application inspired by Letterboxd that allows users to discover, track, review, and rate movies and TV series. The project is built solo as a learning milestone after the medical system project, covering authentication, REST API design, external API consumption, and a polished React frontend — all without relying on AI code agents.
+CineLog is a full-stack web application inspired by Letterboxd that allows users to discover, track, review, and rate movies and TV series.
+
+**Experience direction (v1.1):** The public-facing homepage (guest) should feel like the **entrance of a video rental store** ("locadora") — neon ambience, glass door entry ritual, and a guided “walk-in” into browsing, while still being a modern web product.
 
 ---
 
@@ -21,19 +22,20 @@ CineLog is a full-stack web application inspired by Letterboxd that allows users
 - Design and consume a self-owned REST API from a React frontend
 - Integrate TMDB as an external data source through a backend proxy layer
 - Produce a portfolio-ready project with real-world features
+- Deliver a distinctive UX: **Video-rental entrance homepage** + “corridors” browsing metaphor
 
 ---
 
-## 3. Out of Scope (v1.0)
+## 3. Out of Scope (v1.x)
 
-These will **not** be built in the first version to keep scope manageable:
+These will **not** be built in the first versions to keep scope manageable:
 
 - Social features (following users, activity feed)
-- Lists (custom curated lists like "My Top 10")
 - Comments on reviews
 - Notifications
 - Admin panel
 - Mobile app
+- True synchronized watch party playback (BYOS sync, DRM constraints). We can simulate “sessions” UI, but not implement full sync.
 
 ---
 
@@ -61,15 +63,35 @@ These will **not** be built in the first version to keep scope manageable:
 
 ---
 
-### 5.2 Movie & Series Discovery
+### 5.2 Discovery (Movies & Series)
 
 | ID | Requirement |
 |---|---|
-| DISC-01 | Home page shows trending movies and trending series (from TMDB) |
+| DISC-01 | Guest homepage `/` is a **video rental entrance** experience (door/entry CTA), and provides clear paths into browsing and search |
 | DISC-02 | User can search movies and series by title via unified search |
 | DISC-03 | Results are paginated (20 items per page) |
 | DISC-04 | User can filter browse by genre |
 | DISC-05 | Each card shows: poster, title, year, and average TMDB rating |
+| DISC-06 | Trending movies and trending series from TMDB are available on browse views |
+
+#### 5.2.1 Homepage “Video Rental Entrance” (Guest)
+
+| ID | Requirement |
+|---|---|
+| HOME-01 | Homepage must not look like an internal catalog page; it must feel like a “front door” |
+| HOME-02 | Primary CTA: “Enter the store” → navigates into browse corridors |
+| HOME-03 | Secondary CTA: “Create session” → routes to auth if not logged in (or opens modal) |
+| HOME-04 | Subtle ambience controls: sound toggle (off by default), reduce motion toggle |
+| HOME-05 | Accessibility: keyboard navigation works for main actions; reduce motion is respected |
+
+#### 5.2.2 Browse “Corridors” Experience (Guest)
+
+| ID | Requirement |
+|---|---|
+| COR-01 | Browse is organized into 3–5 “corridors” (e.g., New Releases, Horror, Anime, Series) |
+| COR-02 | “Walking” is represented by horizontal section navigation (snap points) |
+| COR-03 | Each corridor contains a shelf carousel of titles (shadcn/ui carousel) |
+| COR-04 | Parallax/ambient motion must be subtle and disabled with prefers-reduced-motion |
 
 ---
 
@@ -128,70 +150,19 @@ These will **not** be built in the first version to keep scope manageable:
 | **Usability** | App is fully responsive (mobile-first with Tailwind breakpoints) |
 | **Code Quality** | TypeScript strict mode enabled on both frontend and backend |
 | **Environment** | All secrets in `.env` files, never committed to Git |
+| **Accessibility** | Animations must respect prefers-reduced-motion |
 
 ---
 
 ## 7. Technical Architecture
 
-┌─────────────────────┐ ┌──────────────────────────┐
-│ React Frontend │ ──────▶│ Express Backend API │
-│ React + TS + │ fetch │ Node.js + Prisma + │
-│ Tailwind + shadcn │ ◀───── │ PostgreSQL + JWT │
-└─────────────────────┘ JSON └───────────┬──────────────┘
-│ HTTP (proxy)
-▼
-┌──────────────────────┐
-│ TMDB API v3 │
-│ api.themoviedb.org │
-└──────────────────────┘
-
-text
+(unchanged)
 
 ---
 
 ## 8. API Endpoints (Backend)
 
-### Auth
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| POST | `/api/auth/register` | ❌ | Create new user |
-| POST | `/api/auth/login` | ❌ | Login, returns tokens |
-| POST | `/api/auth/logout` | ✅ | Invalidate refresh token |
-| POST | `/api/auth/refresh` | ❌ | Get new access token |
-
-### Movies & Series (TMDB Proxy)
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| GET | `/api/movies/trending` | ❌ | Trending movies |
-| GET | `/api/series/trending` | ❌ | Trending series |
-| GET | `/api/search?q=&page=` | ❌ | Unified search |
-| GET | `/api/movies/:tmdbId` | ❌ | Movie detail |
-| GET | `/api/series/:tmdbId` | ❌ | Series detail |
-
-### Reviews
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| GET | `/api/reviews/:mediaType/:tmdbId` | ❌ | Get reviews for a title |
-| POST | `/api/reviews` | ✅ | Create review |
-| PUT | `/api/reviews/:id` | ✅ | Edit own review |
-| DELETE | `/api/reviews/:id` | ✅ | Delete own review |
-
-### Watchlist
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| GET | `/api/watchlist` | ✅ | Get user's watchlist |
-| POST | `/api/watchlist` | ✅ | Add title to watchlist |
-| DELETE | `/api/watchlist/:id` | ✅ | Remove from watchlist |
-
-### Users
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| GET | `/api/users/:username` | ❌ | Get public profile |
+(unchanged)
 
 ---
 
@@ -199,7 +170,8 @@ text
 
 | Page | Route | Auth Required |
 |---|---|---|
-| Home | `/` | ❌ |
+| Home (Entrance) | `/` | ❌ |
+| Browse Corridors | `/browse` | ❌ |
 | Search Results | `/search?q=` | ❌ |
 | Movie Detail | `/movie/:tmdbId` | ❌ |
 | Series Detail | `/series/:tmdbId` | ❌ |
@@ -210,43 +182,24 @@ text
 
 ---
 
-## 10. Development Phases
+## 10. Development Phases (updated)
 
 | Phase | Scope | Deliverable |
 |---|---|---|
 | **1 — Setup** | Repo, folder structure, Prisma init, Express boilerplate | Running dev server |
 | **2 — Auth** | Register, login, logout, JWT middleware | Postman-testable auth API |
 | **3 — TMDB Proxy** | Trending, search, detail endpoints | Backend serves TMDB data |
-| **4 — Browse UI** | Home page, search, movie/series cards | Browseable frontend |
-| **5 — Detail Pages** | Movie + series detail with cast | Clickable cards |
-| **6 — Reviews** | Create, edit, delete reviews + star rating | Full review flow |
-| **7 — Watchlist** | Add/remove, watchlist page | Persistent list |
-| **8 — Profile** | Profile page with stats, reviews, watchlist | Public profiles |
-| **9 — Polish** | Responsive design, loading skeletons, error handling | Portfolio-ready |
+| **4 — Design System** | Tailwind tokens, shadcn setup, core layout, accessibility baseline | Reusable UI primitives |
+| **5 — Homepage Entrance** | `/` entrance page + door CTA + ambience toggles | Homepage experience |
+| **6 — Browse Corridors** | `/browse` with corridor sections + snap + shelf carousel | Locadora browsing |
+| **7 — Detail Pages** | Movie + series detail with cast | Clickable cards |
+| **8 — Reviews** | Create/edit/delete reviews + star rating | Full review flow |
+| **9 — Watchlist** | Add/remove + watchlist page | Persistent list |
+| **10 — Profile** | Profile page with stats, reviews, watchlist | Public profiles |
+| **11 — Polish** | Responsive, skeletons, errors, perf | Portfolio-ready |
 
 ---
 
 ## 11. Repository Structure
 
-cinelog/
-├── backend/
-│ ├── src/
-│ │ ├── controllers/
-│ │ ├── routes/
-│ │ ├── middlewares/
-│ │ ├── services/ ← tmdbService.ts lives here
-│ │ └── app.ts
-│ ├── prisma/schema.prisma
-│ ├── .env.example
-│ └── package.json
-├── frontend/
-│ ├── src/
-│ │ ├── components/
-│ │ ├── pages/
-│ │ ├── hooks/
-│ │ ├── services/ ← api.ts (axios to your backend)
-│ │ └── context/
-│ ├── .env.example
-│ └── package.json
-├── .gitignore
-└── README.md
+(unchanged)
